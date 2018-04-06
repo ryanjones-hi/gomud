@@ -5,11 +5,11 @@
 package main
 
 import (
-        "ourchat/conn"
+        "./conn"
 	"flag"
 	"log"
 	"net/http"
-        "ourchat/db"
+        "./db"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")

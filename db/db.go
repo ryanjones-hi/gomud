@@ -10,9 +10,9 @@ var Db *pg.DB
 func InitDb() {
 
     Db = pg.Connect(&pg.Options{
-        User:     "django",
-        Password: "django",
-        Database: "django_project",
+        User:     "gomud",
+        Password: "gomud",
+        Database: "gomud",
     })
     fmt.Println(Db)
 }

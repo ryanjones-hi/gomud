@@ -1,9 +1,12 @@
 package cmd
 
 import "github.com/go-pg/pg"
-import "ourchat/model"
+import "../model"
+import "fmt"
 
 func Dig(db *pg.DB, params ...[]byte) {
+    fmt.Println("bar")
+    fmt.Println(params)
 
 //    cmd := params[0]
     name := params[1]
@@ -16,5 +19,7 @@ func Dig(db *pg.DB, params ...[]byte) {
 
     if err := db.Insert(&room); err != nil {
         panic(err)
+        fmt.Println("foo")
+        fmt.Println(err)
     }
 }
