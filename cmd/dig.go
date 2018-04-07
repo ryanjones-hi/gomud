@@ -1,25 +1,18 @@
 package cmd
 
-import "github.com/go-pg/pg"
 import "../model"
-import "fmt"
 
-func Dig(db *pg.DB, params ...[]byte) {
-    fmt.Println("bar")
-    fmt.Println(params)
-
-//    cmd := params[0]
+func Dig(params ...[]byte) {
     name := params[1]
     text := params[2]
+    //state := map[string]interface{}{}
 
-    room := model.Room{
+    room := model.Room_{
         Name: string(name),
         Text: string(text),
+     //   State: &state,
     }
 
-    if err := db.Insert(&room); err != nil {
-        panic(err)
-        fmt.Println("foo")
-        fmt.Println(err)
-    }
+    model.CreateRoom(&room)
+    //room.Insert()
 }

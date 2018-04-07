@@ -1,0 +1,8 @@
+package main
+
+import "./model"
+
+func main() {
+    //model.BuildPlayerTable()
+    model.BuildRoomTable()
+}

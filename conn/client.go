@@ -12,7 +12,6 @@ import (
         "fmt"
         "../model"
         "../cmd"
-        "../db"
 	"github.com/gorilla/websocket"
 )
 
@@ -101,7 +100,7 @@ func processMessage(message []byte) {
                         }
                         //Can refactor the below into a new map[[]byte]func
                         if(bytes.Equal(allparams[0],[]byte("dig"))) {
-                            cmd.Dig(db.Db, allparams...)
+                            cmd.Dig(allparams...)
                         }
                         //fmt.Println(string(message))
                         //fmt.Printf("%q\n",allparams)
