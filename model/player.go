@@ -38,6 +38,9 @@ func (player *Player) Room(params ...*Room) *Room {
 }
 
 func CreatePlayer(base *Player_) *Player {
+    if base.Room == nil {
+        base.Room = HomeRoom()
+    }
     base.Insert()
     return &Player{Base: base, State: make(map[string]interface{})}
 }

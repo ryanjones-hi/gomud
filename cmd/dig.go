@@ -2,7 +2,7 @@ package cmd
 
 import "../model"
 
-func Dig(params ...[]byte) {
+func Dig(player *model.Player, params ...[]byte) {
     name := params[1]
     text := params[2]
     //state := map[string]interface{}{}

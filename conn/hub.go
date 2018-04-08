@@ -111,7 +111,7 @@ func (h *Hub) Run() {
 //    if err != nil {
 //        panic(err)
 //    }
-//    fmt.Println(info)
+      //fmt.Println("hey")
 
 	for {
 		select {
@@ -123,6 +123,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
+                        fmt.Println(message)
 			for client := range h.clients {
 				select {
 				case client.send <- message:

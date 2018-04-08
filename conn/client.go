@@ -45,9 +45,6 @@ var upgrader = websocket.Upgrader{
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub
-
-        room *model.Room
-
         player *model.Player
 	// The websocket connection.
 	conn *websocket.Conn
@@ -78,12 +75,13 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-                processMessage(message)
-		//c.hub.broadcast <- message
+                retval := processMessage(c,message)
+                fmt.Println("readpump",retval)
+		c.hub.broadcast <- []byte(retval)
 	}
 }
 
-func processMessage(message []byte) {
+func processMessage(c *Client, message []byte) (retval string){
                         split := bytes.Split(message, []byte("`"))
                         //fmt.Println("%q\n",split)
                         allparams := [][]byte{}//[]byte is a string, thus [][]byte is an array of strings(i.e. our parameters)
@@ -100,11 +98,15 @@ func processMessage(message []byte) {
                         }
                         //Can refactor the below into a new map[[]byte]func
                         if(bytes.Equal(allparams[0],[]byte("dig"))) {
-                            cmd.Dig(allparams...)
+                            cmd.Dig(c.player,allparams...)
+                        }
+                        if(bytes.Equal(allparams[0],[]byte("look"))) {
+                            retval = cmd.Look(c.player,allparams...)
                         }
                         //fmt.Println(string(message))
                         //fmt.Printf("%q\n",allparams)
                         fmt.Println(string(allparams[0]))
+                        return retval
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -121,6 +123,7 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send:
+                        fmt.Println("writePump",message)
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -132,7 +135,7 @@ func (c *Client) writePump() {
 			if err != nil {
 				return
 			}
-			//w.Write(append(message,"world"...))
+			w.Write(message)
                         fmt.Sprintf("%T", message)
 
 			// Add queued chat messages to the current websocket message.
@@ -161,7 +164,10 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+        
+        player := model.CreatePlayer(&model.Player_{})
+        fmt.Println(player)
+	client := &Client{hub: hub, conn: conn, player:player, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
