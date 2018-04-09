@@ -2,7 +2,7 @@ package model
 //package main
 
 import (
-    "fmt"
+//    "fmt"
     "../db"
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
@@ -45,16 +45,12 @@ func CreatePlayer(base *Player_) *Player {
     return &Player{Base: base, State: make(map[string]interface{})}
 }
 
-func BuildPlayerTable() {
+func init() {
     Db := pg.Connect(&pg.Options{
-        User:     "gomud",
+        User: "gomud",
         Password: "gomud",
         Database: "gomud",
     })
-   err := Db.CreateTable((*Player_)(nil),&orm.CreateTableOptions{})
-   if err != nil {
-       panic(err)
-   }
-
-   fmt.Println("foo")
+    //TODO: Log the error below(Which we're probably fine with)
+    Db.CreateTable((*Player_)(nil),&orm.CreateTableOptions{})
 }

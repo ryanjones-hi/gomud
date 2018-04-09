@@ -3,6 +3,7 @@ package cmd
 import "../model"
 
 func Dig(player *model.Player, params ...[]byte) {
+    currentRoomId := player.Room().Id()
     name := params[1]
     text := params[2]
     //state := map[string]interface{}{}
@@ -13,6 +14,12 @@ func Dig(player *model.Player, params ...[]byte) {
      //   State: &state,
     }
 
-    model.CreateRoom(&room)
+    nextRoom := model.CreateRoom(&room)
+    nextRoomId := nextRoom.Id()
+
+
+    model.CreateExit(&model.Exit_{To:nextRoomId,From:currentRoomId,Text:string(text)})
+    model.CreateExit(&model.Exit_{To:currentRoomId,From:nextRoomId,Text:player.Room().Name()})
+    //make exits to and from the new room
     //room.Insert()
 }

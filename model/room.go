@@ -50,6 +50,10 @@ func (room *Room) Text(params ...string) string {
     return room.Base.Text
 }
 
+func (room *Room) Exits(exits ...*Exit) Exits {
+    return GroupExitsBy("From")[room.Id()]
+}
+
 func CreateRoom(base *Room_) *Room {
     base.Insert()
     return &Room{Base: base, State:make(map[string]interface{})}
