@@ -4,31 +4,38 @@ import "../model"
 import "fmt"
 import "strings"
 
+func LookExits(player *model.Player) string {
+    exits := model.GroupExitsBy("From")[player.RoomId()]
+    str := []string{}
+    for _,e := range exits {
+		str = append(str, fmt.Sprintf("%v(%v)",e.Text(),e.Id()))
+    }
+
+    return "Exits: " + strings.Join(str,", ")
+}
+
 func Look(player *model.Player, params ...[]byte) string {
-    if len(params) == 0 {
-        return player.Room().Name() + "\n" + player.Room().Text() 
+    fmt.Println("Look")
+    if len(params) <= 1 {
+        print("Look params 0")
+        room := model.RoomById(player.RoomId())
+        player.SendMsg(fmt.Sprintf("%v(%v)\n%v\n%v",room.Name(),room.Id(),room.Text(),LookExits(player)))
+        return fmt.Sprintf("%v(%v)\n%v\n%v",room.Name(),room.Id(),room.Text(),LookExits(player))
     }
 
     fmt.Println("lookParams",params)
     switch string(params[1]) {
         case "exits":
-            //fmt.Println("groupedExits",model.GroupExitsBy("From")[player.Room().Id()][0].To())
-            exits := model.GroupExitsBy("From")[player.Room().Id()]
+            exits := model.GroupExitsBy("From")[player.RoomId()]
             str := []string{}
             for _,e := range exits {
-                str = append(str, e.Text())
+			str = append(str, fmt.Sprintf("%v(%v)",e.Text(),e.Id()))
             }
-            fmt.Println("built string",strings.Join(str,", "))
 
             return "Exits: " + strings.Join(str,", ")
-            //return player.Room().Name() + '\n' + player.Room().Text() 
-            //return model.GroupExitsBy("From")[player.Room().Id()]
            
         default:
             return "Default!" 
     }
-
-        
-    fmt.Println(player.Room().Text())
     return "No return"
 }

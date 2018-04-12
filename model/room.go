@@ -6,6 +6,7 @@ import (
     "../db"
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
+    "errors"
 )
 
 //This base class mirrors the schema in the database
@@ -21,6 +22,7 @@ type Room struct {
 }
 type Rooms []*Room
 var allRooms Rooms
+var roomsById map[int]*Room
 
 func (room *Room_) Insert() {
       if err := db.Db.Insert(room); err != nil {
@@ -56,14 +58,35 @@ func (room *Room) Exits(exits ...*Exit) Exits {
 
 func CreateRoom(base *Room_) *Room {
     base.Insert()
-    return &Room{Base: base, State:make(map[string]interface{})}
+    room := &Room{Base: base, State:make(map[string]interface{})}
+    roomsById[room.Id()] = room
+    allRooms = append(allRooms, room)
+    return room
+}
+
+func RoomById(id int) *Room {
+    return roomsById[id]
 }
 
 func HomeRoom() *Room {
     return allRooms[0]
 }
 
+type myroomfunc func(*Room) bool
+func (rooms *Rooms) Find(f myroomfunc) (*Room, error) {
+    for _,e := range *rooms {
+        if f(e) == true {
+            return e, nil
+        }
+    }
+    return nil, errors.New("value_not_found")
+}
+
 func init() {
+    thefunc := func(room *Room) bool {
+        return room.Id() == 2
+    }
+
     Db := pg.Connect(&pg.Options{
         User:     "gomud",
         Password: "gomud",
@@ -76,11 +99,13 @@ func init() {
         panic(err)
     }  
     allRooms = make(Rooms, len(allRooms_))
+    roomsById = make(map[int]*Room)
 
-    for i,base := range allRooms_ {
-        allRooms[i] = &Room{Base: &base, State:make(map[string]interface{})}
+    for i,_ := range allRooms_ {
+        allRooms[i] = &Room{Base: &allRooms_[i], State:make(map[string]interface{})}
+        roomsById[allRooms_[i].Id] = allRooms[i]
     }
-    fmt.Println(allRooms)
+    allRooms.Find(thefunc)
 }
 
 func BuildRoomTable() {

@@ -103,6 +103,9 @@ func processMessage(c *Client, message []byte) (retval string){
                         if(bytes.Equal(allparams[0],[]byte("look"))) {
                             retval = cmd.Look(c.player,allparams...)
                         }
+                        if(bytes.Equal(allparams[0],[]byte("move"))) {
+                            retval = cmd.Move(c.player,allparams...)
+                        }
                         //fmt.Println(string(message))
                         //fmt.Printf("%q\n",allparams)
                         fmt.Println(string(allparams[0]))
@@ -167,7 +170,12 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
         
         player := model.CreatePlayer(&model.Player_{})
         fmt.Println(player)
-	client := &Client{hub: hub, conn: conn, player:player, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, player:player, send: make(chan []byte,256)}
+        player.Send = client.send
+        fmt.Println("Send: ",player.Send)
+        player.Send <- []byte("foo")
+        fmt.Println("servews player.Send:", player.Send)
+        player.SendMsg("foo")
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
