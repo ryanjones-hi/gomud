@@ -6,6 +6,7 @@ import (
     "../db"
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
+    "errors"
 )
 
 //This is the portion of our player that is backed up in the database
@@ -13,6 +14,7 @@ type Player_ struct {
     Id int
     RoomId int
     Name string
+    Pass []byte
 }
 
 type Player struct {
@@ -34,16 +36,24 @@ func (player *Player) Id() int{
     return player.Base.Id
 }
 
+func (player *Player) Login() {
+
+    playersGroupedBy["Room"][player.Base.RoomId] = append(playersGroupedBy["Room"][player.Base.RoomId], player)
+    allPlayers = append(allPlayers, player)
+}
+
 func (player *Player) SendMsg(msg string) {
-    fmt.Println(msg)
-    //fmt.Println("Player:",(*player).Base)
-    //fmt.Println("SendMsg player.Send:", (*player).Send)
     player.Send <- []byte(msg)
 }
 
 func (player *Player) RoomId(params ...int) int {
     if len(params) > 0 {
+        players := playersGroupedBy["Room"][player.Base.RoomId]
+        i,e,_ := players.Find(func(_player *Player)bool { return player.Id() == _player.Id() })
+        playersGroupedBy["Room"][player.Base.RoomId] = append(players[:i],players[i+1:]...)
+        playersGroupedBy["Room"][params[0]] = append(playersGroupedBy["Room"][params[0]],e)
         player.Base.RoomId = params[0]
+        db.Db.Update(player.Base)
     }
     return player.Base.RoomId
 }
@@ -84,8 +94,17 @@ func GroupPlayersBy(prop string) map[int]Players {
             return playersGroupedBy["Room"]
         default:
             panic("Property not found!")
-            //return allExits
     }
+}
+
+type myplayerfunc func(*Player) bool
+func (players *Players) Find(f myplayerfunc) (int, *Player, error) {
+    for i,e := range *players{
+        if f(e) == true {
+            return i, e, nil
+        }
+    }
+    return 0, nil, errors.New("value_not_found")
 }
 
 func init() {
@@ -117,5 +136,4 @@ func init() {
 
     playersGroupedBy = make(map[string]map[int]Players)
     playersGroupedBy["Room"] = groupedbyroom
-    fmt.Println(allPlayers_)
 }

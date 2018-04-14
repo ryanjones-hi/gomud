@@ -4,10 +4,11 @@ import "../model"
 import "strconv"
 import "fmt"
 
-func Move(player *model.Player, params ...[]byte) string {
+func Move(player *model.Player, params ...[]byte) {
     exitId, err := strconv.Atoi(string(params[1]))
     if err != nil {
-        panic(err)
+        player.SendMsg("Invalid parameter!")
+        return
     }
     exits := model.GroupExitsBy("From")[player.RoomId()]
    
@@ -17,25 +18,18 @@ func Move(player *model.Player, params ...[]byte) string {
     exit, err := exits.Find(find)
 
     if err != nil {
-        fmt.Println(err)
-        return "Exit does not exist here!" 
+        player.SendMsg("Exit does not exist here!") 
+        return
     }
 
-    //currRoom := model.RoomById(player.RoomId())
-    //nextRoom := model.RoomById(exit.To())
     player.SendMsg("foo")
 
     players := model.GroupPlayersBy("Room")[player.RoomId()]
-    fmt.Println(exit.To())
     player.RoomId(exit.To())
 
     players.Broadcast(fmt.Sprintf("Player %v has left the building!",player.Id()))
     players = model.GroupPlayersBy("Room")[player.RoomId()]
     players.Broadcast(fmt.Sprintf("Player %v has entered the building!",player.Id()))
 
-fmt.Println(players)
-    
-    return Look(player)
-
- 
+    Look(player)
 }

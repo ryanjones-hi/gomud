@@ -42,9 +42,7 @@ var upgrader = websocket.Upgrader{
         },
 }
 
-// Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub *Hub
         player *model.Player
 	// The websocket connection.
 	conn *websocket.Conn
@@ -53,14 +51,11 @@ type Client struct {
 	send chan []byte
 }
 
-// readPump pumps messages from the websocket connection to the hub.
-//
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
 func (c *Client) readPump() {
 	defer func() {
-		c.hub.unregister <- c
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
@@ -75,45 +70,10 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-                retval := processMessage(c,message)
-                fmt.Println("readpump",retval)
-		c.hub.broadcast <- []byte(retval)
+                cmd.ProcessCommand(c.player,message)
 	}
 }
 
-func processMessage(c *Client, message []byte) (retval string){
-                        split := bytes.Split(message, []byte("`"))
-                        //fmt.Println("%q\n",split)
-                        allparams := [][]byte{}//[]byte is a string, thus [][]byte is an array of strings(i.e. our parameters)
-                        for i, param := range split {
-                            if i % 2 == 0 {
-
-                                if trimmed := bytes.TrimSpace(param); len(trimmed) > 0 {
-                                    splitted := bytes.Split(trimmed, []byte(" "))
-                                    allparams = append(allparams, splitted...)
-                                }
-                            } else {
-                                allparams = append(allparams, param)
-                            }
-                        }
-                        //Can refactor the below into a new map[[]byte]func
-                        if(bytes.Equal(allparams[0],[]byte("dig"))) {
-                            cmd.Dig(c.player,allparams...)
-                        }
-                        if(bytes.Equal(allparams[0],[]byte("look"))) {
-                            retval = cmd.Look(c.player,allparams...)
-                        }
-                        if(bytes.Equal(allparams[0],[]byte("move"))) {
-                            retval = cmd.Move(c.player,allparams...)
-                        }
-                        //fmt.Println(string(message))
-                        //fmt.Printf("%q\n",allparams)
-                        fmt.Println(string(allparams[0]))
-                        return retval
-}
-
-// writePump pumps messages from the hub to the websocket connection.
-//
 // A goroutine running writePump is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
@@ -126,10 +86,8 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send:
-                        fmt.Println("writePump",message)
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -161,22 +119,20 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
         
-        player := model.CreatePlayer(&model.Player_{})
-        fmt.Println(player)
-	client := &Client{hub: hub, conn: conn, player:player, send: make(chan []byte,256)}
-        player.Send = client.send
-        fmt.Println("Send: ",player.Send)
-        player.Send <- []byte("foo")
-        fmt.Println("servews player.Send:", player.Send)
-        player.SendMsg("foo")
-	client.hub.register <- client
+	client := &Client{conn: conn, send: make(chan []byte,256)}
+        //player := model.CreatePlayer(&model.Player_{})
+        player := &model.Player{Send:client.send}
+        fmt.Println(player.Base)
+        client.player = player
+        //player.Send = client.send
+        player.SendMsg("Welcome to Gomud!")
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

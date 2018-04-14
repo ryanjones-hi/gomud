@@ -30,11 +30,9 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 func main() {
         db.InitDb()
 	flag.Parse()
-	hub := conn.NewHub()
-	go hub.Run()
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		conn.ServeWs(hub, w, r)
+		conn.ServeWs(w, r)
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

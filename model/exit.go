@@ -1,7 +1,7 @@
 package model
 
 import (
-    "fmt"
+//    "fmt"
     "../db"
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
@@ -74,7 +74,6 @@ func GroupExitsBy(prop string) map[int]Exits {
 type myfunc func(*Exit) bool
 func (exits *Exits) Find(f myfunc) (*Exit, error) {
     for _,e := range *exits {
-        fmt.Println("bar")
         if f(e) == true {
             return e, nil
         }
@@ -110,6 +109,5 @@ func init() {
     //print("groupedbyfrom",groupedbyfrom[1][0].To())
     exitsGroupedBy = make(map[string]map[int]Exits)
     exitsGroupedBy["From"] = groupedbyfrom
-    fmt.Println(allExits)
     
 }

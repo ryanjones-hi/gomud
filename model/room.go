@@ -2,7 +2,7 @@ package model
 //package main
 
 import (
-    "fmt"
+//    "fmt"
     "../db"
     "github.com/go-pg/pg"
     "github.com/go-pg/pg/orm"
@@ -118,7 +118,5 @@ func BuildRoomTable() {
    if err != nil {
        panic(err)
    }
- 
-   fmt.Println("foo")
 }
 

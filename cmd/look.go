@@ -14,13 +14,21 @@ func LookExits(player *model.Player) string {
     return "Exits: " + strings.Join(str,", ")
 }
 
-func Look(player *model.Player, params ...[]byte) string {
-    fmt.Println("Look")
+func LookPlayers(player *model.Player) string {
+    players := model.GroupPlayersBy("Room")[player.RoomId()]
+    str := []string{}
+    for _,e := range players {
+        str = append(str, fmt.Sprintf("%v",e.Id()))
+    }
+
+    return "Players: " + strings.Join(str,", ")
+}
+
+func Look(player *model.Player, params ...[]byte) {
     if len(params) <= 1 {
-        print("Look params 0")
         room := model.RoomById(player.RoomId())
-        player.SendMsg(fmt.Sprintf("%v(%v)\n%v\n%v",room.Name(),room.Id(),room.Text(),LookExits(player)))
-        return fmt.Sprintf("%v(%v)\n%v\n%v",room.Name(),room.Id(),room.Text(),LookExits(player))
+        player.SendMsg(fmt.Sprintf("%v(%v)\n%v\n%v\n%v",room.Name(),room.Id(),room.Text(),LookExits(player),LookPlayers(player)))
+        return
     }
 
     fmt.Println("lookParams",params)
@@ -31,11 +39,10 @@ func Look(player *model.Player, params ...[]byte) string {
             for _,e := range exits {
 			str = append(str, fmt.Sprintf("%v(%v)",e.Text(),e.Id()))
             }
-
-            return "Exits: " + strings.Join(str,", ")
+            player.SendMsg("Exits: " + strings.Join(str,", "))
            
         default:
-            return "Default!" 
+            player.SendMsg("Default!") 
     }
-    return "No return"
+    player.SendMsg("No return")
 }
