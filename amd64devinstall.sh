@@ -13,7 +13,7 @@ sudo chown -R root:root ./go;
 sudo mv go /usr/local;
 sudo echo "export GOPATH=$HOME/work" >> ~/.profile;
 sudo echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> ~/.profile;
-#source ~/.profile
+. ~/.profile;
 go get -u github.com/go-pg/pg;
 go get -u github.com/gorilla/websocket;
 go get golang.org/x/crypto/bcrypt;
