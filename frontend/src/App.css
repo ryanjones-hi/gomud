@@ -1,0 +1,24 @@
+body {
+    background: black;
+    color: white;
+}
+
+#root {
+    position:relative;
+    height:100vh;
+}
+
+#gomud {
+    position:absolute;
+    bottom:0px;
+}
+
+#gomud, #log, form, #msg {
+    width:100%
+}
+
+input, textarea {
+    border:0px;
+    box-sizing:border-box;
+    height:50px;
+}

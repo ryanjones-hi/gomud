@@ -4,8 +4,6 @@ package model
 import (
     "fmt"
     "../db"
-    "github.com/go-pg/pg"
-    "github.com/go-pg/pg/orm"
     "errors"
 )
 
@@ -15,6 +13,7 @@ type Player_ struct {
     RoomId int
     Name string
     Pass []byte
+    Desc string
 }
 
 type Player struct {
@@ -23,7 +22,7 @@ type Player struct {
     State map[string]interface{}
 }
 type Players []*Player
-var allPlayers Players
+var AllPlayers Players
 var playersGroupedBy map[string]map[int]Players
 
 func (player *Player_) Insert() {
@@ -36,10 +35,30 @@ func (player *Player) Id() int{
     return player.Base.Id
 }
 
-func (player *Player) Login() {
+func (player *Player) Login(id int) error {
 
+    if _,_,err := AllPlayers.Find(func(_player *Player)bool { return _player.Id() == id }); err==nil {
+        return errors.New("Player is already logged in!")
+    }
     playersGroupedBy["Room"][player.Base.RoomId] = append(playersGroupedBy["Room"][player.Base.RoomId], player)
-    allPlayers = append(allPlayers, player)
+    AllPlayers = append(AllPlayers, player)
+    fmt.Println(AllPlayers)
+    return nil
+}
+
+func (player *Player) Logout() {
+    var err error
+    playersGroupedBy["Room"][player.Base.RoomId],err = playersGroupedBy["Room"][player.Base.RoomId].Remove(player)
+    if err != nil {
+        panic(err)
+    }
+    AllPlayers,err = AllPlayers.Remove(player)
+    if err != nil {
+        panic(err)
+    }
+    player.Base = nil
+    player.SendMsg("You have been logged out!")
+    fmt.Println(AllPlayers)
 }
 
 func (player *Player) SendMsg(msg string) {
@@ -65,13 +84,22 @@ func (player *Player) Name(params ...string) string {
     return player.Base.Name
 }
 
+func (player *Player) Desc(params ...string) string {
+    if len(params) > 0 {
+        player.Base.Desc = params[0]
+        db.Db.Update(player.Base)
+    }
+    return player.Base.Desc
+}
+
+
 func CreatePlayer(base *Player_) *Player {
     if base.RoomId == 0 {
         base.RoomId = HomeRoom().Id()
     }
     base.Insert()
     newPlayer := &Player{Base: base, State: make(map[string]interface{})}
-    allPlayers = append(allPlayers,newPlayer)
+    AllPlayers = append(AllPlayers,newPlayer)
     groupedbyroom := playersGroupedBy["Room"]
     if _, ok := groupedbyroom[newPlayer.RoomId()]; !ok {
         groupedbyroom[newPlayer.RoomId()] = Players{newPlayer}
@@ -104,35 +132,29 @@ func (players *Players) Find(f myplayerfunc) (int, *Player, error) {
             return i, e, nil
         }
     }
-    return 0, nil, errors.New("value_not_found")
+    return 0, nil, errors.New("item_not_found")
+}
+
+func (players Players) Remove(player *Player) (Players, error) {
+    for i,e := range players{
+        if e == player {
+            return append(players[:i],players[i+1:]...), nil
+        }
+    }
+    return players, errors.New("item_not_found") 
 }
 
 func init() {
-    Db := pg.Connect(&pg.Options{
-        User: "gomud",
-        Password: "gomud",
-        Database: "gomud",
-    })
-    //TODO: Log the error below(Which we're probably fine with)
-    Db.CreateTable((*Player_)(nil),&orm.CreateTableOptions{})
+    db.CreateTable((*Player_)(nil))
 
-    var allPlayers_ []Player_
-    err := Db.Model(&allPlayers_).Select()
+    var AllPlayers_ []Player_
+    err := db.Db.Model(&AllPlayers_).Select()
     if err!=nil {
         panic(err)
     }
-    allPlayers = make(Players,0)
+    AllPlayers = make(Players,0)
 
     groupedbyroom := make(map[int]Players)
-    //for i,_ := range allPlayers_ {
-    //    newPlayer := &Player{Base: &allPlayers_[i], State:make(map[string]interface{})}
-    //    allPlayers[i] = newPlayer
-    //    if _, ok := groupedbyroom[newPlayer.RoomId()]; !ok {
-    //        groupedbyroom[newPlayer.RoomId()] = Players{newPlayer}
-    //    } else {
-    //        groupedbyroom[newPlayer.RoomId()] = append(groupedbyroom[newPlayer.RoomId()],newPlayer)
-    //    }
-    //}
 
     playersGroupedBy = make(map[string]map[int]Players)
     playersGroupedBy["Room"] = groupedbyroom

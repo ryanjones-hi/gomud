@@ -1,10 +1,10 @@
 package model
 
 import (
-//    "fmt"
+    "fmt"
     "../db"
-    "github.com/go-pg/pg"
-    "github.com/go-pg/pg/orm"
+//    "github.com/go-pg/pg"
+//    "github.com/go-pg/pg/orm"
     "errors"
 )
 
@@ -12,7 +12,8 @@ type Exit_ struct {
     Id int
     From int
     To int
-    Text string
+    Desc string
+    Name string
 }
 
 type Exit struct {
@@ -20,7 +21,7 @@ type Exit struct {
     State map[string]interface{}
 }
 type Exits []*Exit
-var allExits Exits
+var AllExits Exits
 var exitsGroupedBy map[string]map[int]Exits
 
 func (exit *Exit_) Insert() {
@@ -40,6 +41,13 @@ func (exit *Exit) To(params ...int) int {
     return exit.Base.To
 }
 
+func (exit *Exit) Name(params ...string) string {
+    if len(params) > 0 {
+        exit.Base.Name = params[0]
+    }
+    return exit.Base.Name
+}
+
 func (exit *Exit) From(params ...int) int {
     if len(params) > 0 {
         exit.Base.From = params[0]
@@ -47,17 +55,18 @@ func (exit *Exit) From(params ...int) int {
     return exit.Base.From
 }
 
-func (exit *Exit) Text(params ...string) string {
+func (exit *Exit) Desc(params ...string) string {
     if len(params) > 0 {
-        exit.Base.Text = params[0]
+        exit.Base.Desc = params[0]
     }
-    return exit.Base.Text
+    return exit.Base.Desc
 }
 
 func CreateExit(base *Exit_) *Exit {
     base.Insert()
     newExit := &Exit{Base: base, State:make(map[string]interface{})}
     exitsGroupedBy["From"][base.From] = append(exitsGroupedBy["From"][base.From],newExit)
+    AllExits = append(AllExits,newExit)
     return newExit
 }
 
@@ -67,13 +76,14 @@ func GroupExitsBy(prop string) map[int]Exits {
             return exitsGroupedBy["From"]
         default:
             panic("Property not found!")
-            //return allExits
+            //return AllExits
     }
 }
 
 type myfunc func(*Exit) bool
 func (exits *Exits) Find(f myfunc) (*Exit, error) {
     for _,e := range *exits {
+        fmt.Println(e.Id())
         if f(e) == true {
             return e, nil
         }
@@ -82,24 +92,19 @@ func (exits *Exits) Find(f myfunc) (*Exit, error) {
 }
 
 func init() {
-    Db := pg.Connect(&pg.Options{
-        User:      "gomud",
-        Password:  "gomud",
-        Database:  "gomud",
-    })
-    Db.CreateTable((*Exit_)(nil),&orm.CreateTableOptions{})
-    var allExits_ []Exit_
-    err := Db.Model(&allExits_).Select()
+    db.CreateTable((*Exit_)(nil))
+    var AllExits_ []Exit_
+    err := db.Db.Model(&AllExits_).Select()
     if err!= nil {
        panic(err)
     }
-    allExits = make(Exits, len(allExits_))
+    AllExits = make(Exits, len(AllExits_))
 
     groupedbyfrom := make(map[int]Exits)
-    for i,_ := range allExits_ {
+    for i,_ := range AllExits_ {
         
-        newExit := &Exit{Base: &allExits_[i], State:make(map[string]interface{})}
-        allExits[i] = newExit
+        newExit := &Exit{Base: &AllExits_[i], State:make(map[string]interface{})}
+        AllExits[i] = newExit
         if _, ok := groupedbyfrom[newExit.From()]; !ok { 
             groupedbyfrom[newExit.From()] = Exits{newExit}
         } else {

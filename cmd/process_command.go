@@ -4,8 +4,7 @@ import "bytes"
 import "../model"
 
 type cmd map[string]func(*model.Player,...[]byte)
-//var commands map[string]func(*model.Player,...[]byte) = map[string]func(*model.Player,...[]byte){"dig":Dig,"look":Look,"move":Move}
-var commands cmd = cmd{"dig":Dig,"look":Look,"move":Move}
+var commands cmd = cmd{"dig":Dig,"look":Look,"move":Move,"logout":Logout, "say":Say, "whisper":Whisper, "describe":Describe,"describeroom":DescribeRoom,"describeexit":DescribeExit,"renameroom":RenameRoom,"renameexit":RenameExit}
 var login_commands cmd = cmd {"create":Create,"login":Login}
 
 func ProcessCommand(player *model.Player, message []byte) {
@@ -27,10 +26,9 @@ func ProcessCommand(player *model.Player, message []byte) {
            command(player, allparams...)
            return
        } else {
-           player.SendMsg("Invalid command!")
-           return
+           player.SendMsg("Invalid Command!")
        }
-      player.SendMsg("You are not logged in!")
+      player.SendMsg("You are not logged in! Try CREATE or LOGIN")
       return
    }
 
@@ -40,15 +38,4 @@ func ProcessCommand(player *model.Player, message []byte) {
        player.SendMsg("Invalid command!")
        return
    }
-
-   //Can refactor the below into a new map[[]byte]func
-   //if(bytes.Equal(allparams[0],[]byte("dig"))) {
-   //    Dig(player,allparams...)
-   //}
-   //if(bytes.Equal(allparams[0],[]byte("look"))) {
-   //    Look(player,allparams...)
-   //}
-   //if(bytes.Equal(allparams[0],[]byte("move"))) {
-   //    Move(player,allparams...)
-   //}
 }

@@ -23,8 +23,12 @@ func Login(player *model.Player, params ...[]byte) {
     }
 
     player.Base = player_
-    player.Login()
-    Look(player)
+    if err := player.Login(player_.Id); err != nil {
+        player.SendMsg("That player is already logged in!")
+        player.Base = nil
+        return
+    }
     
     player.SendMsg("Logged in!")
+    Look(player)
 }

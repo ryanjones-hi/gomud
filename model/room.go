@@ -4,8 +4,6 @@ package model
 import (
 //    "fmt"
     "../db"
-    "github.com/go-pg/pg"
-    "github.com/go-pg/pg/orm"
     "errors"
 )
 
@@ -13,7 +11,7 @@ import (
 type Room_ struct {
     Id int
     Name string
-    Text string
+    Desc string
 }
 
 type Room struct {
@@ -21,7 +19,7 @@ type Room struct {
     State map[string]interface{}
 }
 type Rooms []*Room
-var allRooms Rooms
+var AllRooms Rooms
 var roomsById map[int]*Room
 
 func (room *Room_) Insert() {
@@ -45,11 +43,11 @@ func (room *Room) Name(params ...string) string {
     return room.Base.Name
 }
 
-func (room *Room) Text(params ...string) string {
+func (room *Room) Desc(params ...string) string {
     if len(params) > 0 {
-        room.Base.Text = params[0]
+        room.Base.Desc = params[0]
     }
-    return room.Base.Text
+    return room.Base.Desc
 }
 
 func (room *Room) Exits(exits ...*Exit) Exits {
@@ -60,7 +58,7 @@ func CreateRoom(base *Room_) *Room {
     base.Insert()
     room := &Room{Base: base, State:make(map[string]interface{})}
     roomsById[room.Id()] = room
-    allRooms = append(allRooms, room)
+    AllRooms = append(AllRooms, room)
     return room
 }
 
@@ -69,7 +67,7 @@ func RoomById(id int) *Room {
 }
 
 func HomeRoom() *Room {
-    return allRooms[0]
+    return AllRooms[0]
 }
 
 type myroomfunc func(*Room) bool
@@ -83,40 +81,23 @@ func (rooms *Rooms) Find(f myroomfunc) (*Room, error) {
 }
 
 func init() {
-    thefunc := func(room *Room) bool {
-        return room.Id() == 2
-    }
 
-    Db := pg.Connect(&pg.Options{
-        User:     "gomud",
-        Password: "gomud",
-        Database: "gomud",
-    })
-    Db.CreateTable((*Room_)(nil),&orm.CreateTableOptions{})
-    var allRooms_ []Room_
-    err := Db.Model(&allRooms_).Select()
+    db.CreateTable((*Room_)(nil))
+    var AllRooms_ []Room_
+    err := db.Db.Model(&AllRooms_).Select()
     if err != nil {
         panic(err)
     }  
-    allRooms = make(Rooms, len(allRooms_))
+    if(len(AllRooms_) == 0) {
+        room := Room_{Name:"Starting Room",Desc:"This is the room that all players start in!"}
+        room.Insert()
+        AllRooms_ = []Room_{room}
+    }
+    AllRooms = make(Rooms, len(AllRooms_))
     roomsById = make(map[int]*Room)
 
-    for i,_ := range allRooms_ {
-        allRooms[i] = &Room{Base: &allRooms_[i], State:make(map[string]interface{})}
-        roomsById[allRooms_[i].Id] = allRooms[i]
+    for i,_ := range AllRooms_ {
+        AllRooms[i] = &Room{Base: &AllRooms_[i], State:make(map[string]interface{})}
+        roomsById[AllRooms_[i].Id] = AllRooms[i]
     }
-    allRooms.Find(thefunc)
 }
-
-func BuildRoomTable() {
-    Db := pg.Connect(&pg.Options{
-        User:     "gomud",
-        Password: "gomud",
-        Database: "gomud",
-    })
-   err := Db.CreateTable((*Room_)(nil),&orm.CreateTableOptions{})
-   if err != nil {
-       panic(err)
-   }
-}
-

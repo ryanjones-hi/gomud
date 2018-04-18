@@ -9,10 +9,12 @@ import (
 	"flag"
 	"log"
 	"net/http"
-        "./db"
+        "fmt"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
+const port string = ":8080"
+
+var addr = flag.String("addr", port, "http service address")
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
@@ -28,12 +30,12 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-        db.InitDb()
 	flag.Parse()
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		conn.ServeWs(w, r)
 	})
+        fmt.Println("Listening on port",port)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

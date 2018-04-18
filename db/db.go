@@ -2,10 +2,15 @@ package db
 
 import (
     "github.com/go-pg/pg"
+    "github.com/go-pg/pg/orm"
     "fmt"
 )
 
 var Db *pg.DB
+
+func CreateTable(schema interface{}) {
+    Db.CreateTable(schema,&orm.CreateTableOptions{})
+}
 
 func InitDb() {
 
@@ -15,4 +20,8 @@ func InitDb() {
         Database: "gomud",
     })
     fmt.Println(Db)
+}
+
+func init() {
+    InitDb() 
 }
