@@ -1,7 +1,8 @@
-sudo apt-get -y install postgresql postgresql-contrib libpq-dev; 
+curl -sL https://deb.nodesource.com/setup_9.x -o nodesource_setup.sh;
+sudo bash nodesource_setup.sh;
+sudo apt-get -y install postgresql postgresql-contrib libpq-dev nodejs; 
 sudo su - postgres -c "CREATE USER gomud WITH PASSWORD 'gomud'";
 sudo su - postgres -c "psql -c \"CREATE USER gomud WITH PASSWORD 'gomud'\"";
-sudo su - postgres -c "psql -c \"ALTER ROLE django SET client_encoding TO 'utf8'\"";
 sudo su - postgres -c "psql -c \"ALTER ROLE gomud SET client_encoding TO 'utf8'\"";
 sudo su - postgres -c "psql -c \"ALTER ROLE gomud SET default_transaction_isolation TO 'read committed'\"";
 sudo su - postgres -c "psql -c \"ALTER ROLE gomud SET timezone TO 'utc'\"";
@@ -17,3 +18,5 @@ sudo echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >> ~/.profile;
 go get -u github.com/go-pg/pg;
 go get -u github.com/gorilla/websocket;
 go get golang.org/x/crypto/bcrypt;
+cd frontend;
+npm install;
